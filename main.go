@@ -10,21 +10,36 @@ import (
     "encoding/json"
     "bytes"
     "io"
+    "github.com/john-shine/DeepL-Alfred-translator/alfred"
+    "os"
+    "io/ioutil"
 )
 
 func main() {
     var query string
+    var isDebug bool
+
     flag.StringVar(&query, "q", "", "query string")
+    flag.BoolVar(&isDebug, "debug", false, "debug flag")
     flag.Parse()
 
+
     if query == "" {
-        panic("must specify query string by ./DeepL-Alfred-translator -q ${query}")
+        alfred.XMLError("An error occurred", "must specify query string by ./DeepL-Alfred-translator -q ${query}")
+        os.Exit(1)
     }
+
+    if !isDebug {
+        log.SetOutput(ioutil.Discard)
+    } else {
+        log.SetOutput(os.Stdout)
+    }
+
     var jobs []Job
 
     jobs = append(jobs, Job {
         Kind: "default",
-        RawEnSentence: "b",
+        RawEnSentence: query,
         RawEnContextBefore: []string{},
         RawEnContextAfter: []string{},
         PreferredNumBeams: 4,
@@ -53,16 +68,19 @@ func main() {
 
     body, err := json.Marshal(bodyData)
     if err != nil {
-        panic(fmt.Sprintf("assemble request data error: %v", err))
+        log.Println(fmt.Sprintf("assemble request data error: %v", err))
+        alfred.XMLError("An error occurred", "准备请求失败")
+        os.Exit(1)
     }
 
-    fmt.Println("body:", string(body))
+    log.Println("body:", string(body))
     requestMethod := http.MethodPost
 
     request, err := http.NewRequest(requestMethod, ApiServer, bytes.NewBuffer(body))
     if err != nil {
-        log.Println(err)
-        panic("new request is fail.")
+        log.Println(fmt.Sprintf("request to server error: %v", err))
+        alfred.XMLError("An error occurred", "请求失败")
+        os.Exit(1)
     }
 
     Headers = map[string]string {
@@ -75,13 +93,12 @@ func main() {
         "sec-fetch-mode": "cors",
         "referer": "https://www.deepl.com/translator",
         "accept-language": "zh-Hans-CN,zh-CN;q=0.9,zh;q=0.8,en;q=0.7,en-GB;q=0.6,en-US;q=0.5",
-        "cookie": "LMTBID=9cb3eebb-9f13-4936-b22c-ab72656d1f9f|09ef6a01196c9faa4abebc4d6e4b7f6d",
     }
 
     // addr request headers
     if Headers != nil {
         for key, val := range Headers {
-            fmt.Printf("key: %v, value: %v\n", key, val)
+            log.Printf("header key: %v, value: %v\n", key, val)
             request.Header.Add(key, val)
         }
     }
@@ -89,26 +106,47 @@ func main() {
     // http client
     client := &http.Client{Timeout: 10 * time.Second}
     log.Printf("%s URL: %s \n", requestMethod, request.URL.String())
-    response, err := client.Do(request)
+    resp, err := client.Do(request)
     if err != nil {
-        panic(fmt.Sprintf("request to: %v with error: %v", request.URL.String(), err))
+        log.Printf(fmt.Sprintf("request to: %v error: %v", request.URL.String(), err))
+        alfred.XMLError("An error occurred", "发送请求失败")
+        os.Exit(1)
     }
 
-    defer response.Body.Close()
+    defer func() {
+        if resp != nil {
+            resp.Body.Close()
+        }
+    }()
 
-    result := ResponseResult{}
-    err = GetJson(response.Body, result)
+    bodyBytes, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        panic(err)
+        log.Printf(fmt.Sprintf("read body error: %v", err))
+        alfred.XMLError("An error occurred", "读取请求失败")
     }
 
-    if response.StatusCode != http.StatusOK {
-        fmt.Printf("request response: ")
-        panic(fmt.Sprintf("request to: %v, result with error status: %v", request.URL.String(), response.StatusCode))
+    result := ServerResponse{}
+    err = GetJson(bodyBytes, &result)
+    if err != nil {
+        log.Printf(fmt.Sprintf("decode body: %v error: %v", string(bodyBytes), err))
+        alfred.XMLError("An error occurred", "解析请求失败")
+        os.Exit(1)
     }
-    fmt.Printf("request to: %v ok!\n", request.URL.String())
 
-    fmt.Printf("request response: ")
-    io.Copy(os.Stdout, response.Body)
+    if resp.StatusCode != http.StatusOK {
+        log.Printf(fmt.Sprintf("reponse not ok but status: %v", resp.StatusCode))
+        log.Printf("json: %+v\n", result)
+        if result.Error.Message != "" {
+            alfred.XMLError("An error occurred", result.Error.Message)
+            os.Exit(1)
+        }
+        alfred.XMLError("An error occurred", "服务器异常")
+        os.Exit(1)
+    }
+    log.Printf("request ok!\n")
+
+    log.Printf("request response: %v", string(bodyBytes))
+    // alfred.JsonSuccess()
+    os.Exit(0)
 
 }

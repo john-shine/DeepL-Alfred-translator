@@ -60,9 +60,9 @@ type Error struct {
     Message string
 }
 
-type ResponseResult struct {
+type ServerResponse struct {
     Id string `json:"id"`
     JsonRpc string `json:"jsonrpc"`
     Result  `json:"result"`
-    Error Error
+    Error Error `json:"error"`
 }

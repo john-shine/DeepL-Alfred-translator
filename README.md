@@ -1,6 +1,7 @@
 # DeepL-Alfred-translator | DeepL翻译器
 Try out the world’s best machine translation with DeepL translator.
 
+![Preview](https://raw.githubusercontent.com/john-shine/DeepL-Alfred-translator/master/images/preview.png)
 
 ## 简介
 

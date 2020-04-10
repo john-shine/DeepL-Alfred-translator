@@ -50,7 +50,7 @@
 				<key>runningsubtext</key>
 				<string>translating ...</string>
 				<key>script</key>
-				<string>./deepl-translator {query}</string>
+				<string>./DeepL-Alfred-translator -q {query}</string>
 				<key>subtext</key>
 				<string>Try out the world’s best machine translation with DeepL translator</string>
 				<key>title</key>

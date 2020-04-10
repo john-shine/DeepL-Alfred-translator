@@ -5,11 +5,9 @@ import (
     "net/http"
     "log"
     "fmt"
-    "os"
     "time"
     "encoding/json"
     "bytes"
-    "io"
     "github.com/john-shine/DeepL-Alfred-translator/alfred"
     "os"
     "io/ioutil"
@@ -23,10 +21,11 @@ func main() {
     flag.BoolVar(&isDebug, "debug", false, "debug flag")
     flag.Parse()
 
+    xmlFilter := alfred.XMLFilter{}
 
     if query == "" {
-        alfred.XMLError("An error occurred", "must specify query string by ./DeepL-Alfred-translator -q ${query}")
-        os.Exit(1)
+        xmlFilter.Error("An error occurred", "must specify query string by ./DeepL-Alfred-translator -q ${query}")
+        os.Exit(0)
     }
 
     if !isDebug {
@@ -69,8 +68,8 @@ func main() {
     body, err := json.Marshal(bodyData)
     if err != nil {
         log.Println(fmt.Sprintf("assemble request data error: %v", err))
-        alfred.XMLError("An error occurred", "准备请求失败")
-        os.Exit(1)
+        xmlFilter.Error("An error occurred", "准备请求失败")
+        os.Exit(0)
     }
 
     log.Println("body:", string(body))
@@ -79,8 +78,8 @@ func main() {
     request, err := http.NewRequest(requestMethod, ApiServer, bytes.NewBuffer(body))
     if err != nil {
         log.Println(fmt.Sprintf("request to server error: %v", err))
-        alfred.XMLError("An error occurred", "请求失败")
-        os.Exit(1)
+        xmlFilter.Error("An error occurred", "请求失败")
+        os.Exit(0)
     }
 
     Headers = map[string]string {
@@ -109,8 +108,8 @@ func main() {
     resp, err := client.Do(request)
     if err != nil {
         log.Printf(fmt.Sprintf("request to: %v error: %v", request.URL.String(), err))
-        alfred.XMLError("An error occurred", "发送请求失败")
-        os.Exit(1)
+        xmlFilter.Error("An error occurred", "发送请求失败")
+        os.Exit(0)
     }
 
     defer func() {
@@ -122,26 +121,27 @@ func main() {
     bodyBytes, err := ioutil.ReadAll(resp.Body)
     if err != nil {
         log.Printf(fmt.Sprintf("read body error: %v", err))
-        alfred.XMLError("An error occurred", "读取请求失败")
+        xmlFilter.Error("An error occurred", "读取请求失败")
+        os.Exit(0)
     }
 
     result := ServerResponse{}
     err = GetJson(bodyBytes, &result)
     if err != nil {
         log.Printf(fmt.Sprintf("decode body: %v error: %v", string(bodyBytes), err))
-        alfred.XMLError("An error occurred", "解析请求失败")
-        os.Exit(1)
+        xmlFilter.Error("An error occurred", "解析请求失败")
+        os.Exit(0)
     }
 
     if resp.StatusCode != http.StatusOK {
         log.Printf(fmt.Sprintf("reponse not ok but status: %v", resp.StatusCode))
         log.Printf("json: %+v\n", result)
         if result.Error.Message != "" {
-            alfred.XMLError("An error occurred", result.Error.Message)
-            os.Exit(1)
+            xmlFilter.Error("An error occurred", result.Error.Message)
+            os.Exit(0)
         }
-        alfred.XMLError("An error occurred", "服务器异常")
-        os.Exit(1)
+        xmlFilter.Error("An error occurred", "服务器异常")
+        os.Exit(0)
     }
     log.Printf("request ok!\n")
 

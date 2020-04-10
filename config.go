@@ -1,7 +1,8 @@
 package main
 
+import "encoding/json"
 
-var ApiServer string = "https://www2.deepl.com/jsonrpc"
+var ApiServer = "https://www2.deepl.com/jsonrpc"
 
 var Headers map[string]string
 
@@ -32,7 +33,7 @@ type DataBinary struct {
     JsonRpc string `json:"jsonrpc"`
     Method string `json:"method"`
     Params []Param `json:"params"`
-    Id uint64 `json:"id"`
+    Id uint16 `json:"id"`
 }
 
 type Beam struct {
@@ -61,7 +62,7 @@ type Error struct {
 }
 
 type ServerResponse struct {
-    Id string `json:"id"`
+    Id json.Number `json:"id"`
     JsonRpc string `json:"jsonrpc"`
     Result  `json:"result"`
     Error Error `json:"error"`

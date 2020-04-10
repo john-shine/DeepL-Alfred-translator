@@ -11,6 +11,7 @@ import (
     "github.com/john-shine/DeepL-Alfred-translator/alfred"
     "os"
     "io/ioutil"
+    "math/rand"
 )
 
 func main() {
@@ -63,6 +64,7 @@ func main() {
         JsonRpc: "2.0",
         Method: "LMT_handle_jobs",
         Params: params,
+        Id: uint16(rand.Uint32()),
     }
 
     body, err := json.Marshal(bodyData)
@@ -72,7 +74,7 @@ func main() {
         os.Exit(0)
     }
 
-    log.Println("body:", string(body))
+    log.Println("request body: ", string(body))
     requestMethod := http.MethodPost
 
     request, err := http.NewRequest(requestMethod, ApiServer, bytes.NewBuffer(body))
@@ -83,13 +85,12 @@ func main() {
     }
 
     Headers = map[string]string {
-        "authority": "www2.deepl.com",
-        "origin": "https://www.deepl.com",
-        "sec-fetch-dest": "empty",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36 Edg/80.0.361.62' -H 'content-type: text/plain",
+        "origin": "https://www.deepl.com",
         "accept": "*/*",
-        "sec-fetch-site": "same-site",
         "sec-fetch-mode": "cors",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-site": "same-site",
         "referer": "https://www.deepl.com/translator",
         "accept-language": "zh-Hans-CN,zh-CN;q=0.9,zh;q=0.8,en;q=0.7,en-GB;q=0.6,en-US;q=0.5",
     }
@@ -143,10 +144,23 @@ func main() {
         xmlFilter.Error("出了点问题", "DeepL服务器异常")
         os.Exit(0)
     }
-    log.Printf("request ok!\n")
+    log.Printf("request ok!\nrequest response: %v", string(bodyBytes))
 
-    log.Printf("request response: %v", string(bodyBytes))
-    // alfred.JsonSuccess()
+    var items []alfred.FilterItem
+    for _, translations := range result.Result.Translations {
+        for _, beam := range translations.Beams {
+            item := alfred.FilterItem{}
+            item.Title = beam.PostProcessedSentence
+            item.Subtitle = query
+            item.Arg = beam.PostProcessedSentence
+            item.Valid = true
+            item.Icon = "icon.png"
+
+            items = append(items, item)
+        }
+    }
+
+    xmlFilter.Success(items)
     os.Exit(0)
 
 }

@@ -58,7 +58,7 @@ func (v JsonFilter) Error(title, subtitle string) {
     fmt.Printf(string(r))
 }
 
-func (v XMLFilter) Error(title, subtitle string) {
+func (v XMLFilter) Error(subtitle, title string) {
     data := NewInput()
     item := FilterItem{
         Valid: false,

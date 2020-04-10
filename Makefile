@@ -1,5 +1,5 @@
 WORK_DIR = $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-APPLICATION_DIR = ~/Library/Application\ Support/Alfred\ 2/Alfred.alfredpreferences/workflows/
+APPLICATION_DIR = ~/Library/Application\ Support/Alfred\ 2/Alfred.alfredpreferences/workflows
 BUNDLE_ID = user.workflow.63F60794-BB56-4415-9372-BAF974C3A7E1
 CLI_CMD = ./workflow/DeepL-Alfred-translator
 
@@ -22,16 +22,20 @@ release:
 	@mkdir -p ./build
 	ditto -ck ./workflow ./build/DeepL-Alfred-translator.alfredworkflow
 
+test:
+	@echo "--> test binary is it works"
+	./workflow/DeepL-Alfred-translator -q amiable
+
 clean:
 	@echo "--> Cleaning workflow execute files"
-	@- rm -f $(CLI_CMD)
+	@- rm -f "$(CLI_CMD)"
 
 link:
 	@echo "--> Linking workflow files"
-	@- ln -s $(WORK_DIR)/workflow $(APPLICATION_DIR)/$(BUNDLE_ID)
+	ln -snf $(WORK_DIR)/workflow $(APPLICATION_DIR)/$(BUNDLE_ID)
 
 unlink:
 	@echo "--> Unlinking workflow files"
-	@- rm $(APPLICATION_DIR)/$(BUNDLE_ID)
+	@- rm "$(APPLICATION_DIR)/$(BUNDLE_ID)"
 
-.PHONY: default package deploy cli build clean link unlink
+.PHONY: default package deploy cli build test clean link unlink

@@ -7,6 +7,8 @@ default: build cli
 
 deploy: clean build unlink link
 
+release: clean build package
+
 cli:
 	@echo "--> Running CLI commands"
 	@$(CLI_CMD) pos sta
@@ -16,7 +18,7 @@ build:
 	@mkdir -p ./workflow/
 	go build -ldflags '-s -w' -o $(CLI_CMD)
 
-release:
+package:
 	@echo "--> Package to Workflow"
 	@- rm -rf ./build
 	@mkdir -p ./build
@@ -36,6 +38,6 @@ link:
 
 unlink:
 	@echo "--> Unlinking workflow files"
-	@- rm "$(APPLICATION_DIR)/$(BUNDLE_ID)"
+	@- rm $(APPLICATION_DIR)/$(BUNDLE_ID)
 
-.PHONY: default package deploy cli build test clean link unlink
+.PHONY: default deploy release package build cli test clean link unlink

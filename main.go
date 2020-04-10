@@ -17,14 +17,14 @@ func main() {
     var query string
     var isDebug bool
 
-    flag.StringVar(&query, "q", "", "query string")
+    flag.StringVar(&query, "q", "", "query string to deepl")
     flag.BoolVar(&isDebug, "debug", false, "debug flag")
     flag.Parse()
 
     xmlFilter := alfred.XMLFilter{}
 
     if query == "" {
-        xmlFilter.Error("An error occurred", "must specify query string by ./DeepL-Alfred-translator -q ${query}")
+        xmlFilter.Error("出了点问题", "必须指定查询参数，例如：./DeepL-Alfred-translator -q hello")
         os.Exit(0)
     }
 
@@ -68,7 +68,7 @@ func main() {
     body, err := json.Marshal(bodyData)
     if err != nil {
         log.Println(fmt.Sprintf("assemble request data error: %v", err))
-        xmlFilter.Error("An error occurred", "准备请求失败")
+        xmlFilter.Error("出了点问题", "准备请求失败")
         os.Exit(0)
     }
 
@@ -78,7 +78,7 @@ func main() {
     request, err := http.NewRequest(requestMethod, ApiServer, bytes.NewBuffer(body))
     if err != nil {
         log.Println(fmt.Sprintf("request to server error: %v", err))
-        xmlFilter.Error("An error occurred", "请求失败")
+        xmlFilter.Error("出了点问题", "请求失败")
         os.Exit(0)
     }
 
@@ -108,7 +108,7 @@ func main() {
     resp, err := client.Do(request)
     if err != nil {
         log.Printf(fmt.Sprintf("request to: %v error: %v", request.URL.String(), err))
-        xmlFilter.Error("An error occurred", "发送请求失败")
+        xmlFilter.Error("出了点问题", "发送请求失败")
         os.Exit(0)
     }
 
@@ -121,7 +121,7 @@ func main() {
     bodyBytes, err := ioutil.ReadAll(resp.Body)
     if err != nil {
         log.Printf(fmt.Sprintf("read body error: %v", err))
-        xmlFilter.Error("An error occurred", "读取请求失败")
+        xmlFilter.Error("出了点问题", "读取请求失败")
         os.Exit(0)
     }
 
@@ -129,7 +129,7 @@ func main() {
     err = GetJson(bodyBytes, &result)
     if err != nil {
         log.Printf(fmt.Sprintf("decode body: %v error: %v", string(bodyBytes), err))
-        xmlFilter.Error("An error occurred", "解析请求失败")
+        xmlFilter.Error("出了点问题", "解析请求失败")
         os.Exit(0)
     }
 
@@ -137,10 +137,10 @@ func main() {
         log.Printf(fmt.Sprintf("reponse not ok but status: %v", resp.StatusCode))
         log.Printf("json: %+v\n", result)
         if result.Error.Message != "" {
-            xmlFilter.Error("An error occurred", result.Error.Message)
+            xmlFilter.Error("出了点问题", result.Error.Message)
             os.Exit(0)
         }
-        xmlFilter.Error("An error occurred", "服务器异常")
+        xmlFilter.Error("出了点问题", "DeepL服务器异常")
         os.Exit(0)
     }
     log.Printf("request ok!\n")
